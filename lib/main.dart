@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 void main() {
-  runApp(const BelegscannerApp());
+  runApp(const ProviderScope(child: BelegscannerApp()));
 }
 
 class BelegscannerApp extends StatelessWidget {
