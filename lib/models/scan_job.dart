@@ -25,7 +25,6 @@ class ScanJob {
   late String imagePath;
 
   late int retryCount;
-  late String idempotencyKey;
 
   String? lastError;
 
@@ -34,8 +33,6 @@ class ScanJob {
 
   DateTime? lastAttemptAt;
 
-  @enumerated
-  late ScanJobStatus status;
 
   String? serverBelegId;
   String? serverPayloadJson;
