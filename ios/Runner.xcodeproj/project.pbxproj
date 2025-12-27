@@ -1,0 +1,3 @@
+// !$*UTF8*$!
+// Placeholder Xcode project. Regenerate with Flutter tooling when SDK is available.
+{}
