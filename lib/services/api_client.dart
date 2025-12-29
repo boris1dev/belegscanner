@@ -3,7 +3,8 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
-import 'package:image/image.dart' as img;
+import 'package:image/image.dart'
+    as img show Image, copyResize, decodeImage, encodeJpg;
 import '../models/api_response.dart';
 import '../models/scan_job.dart';
 
