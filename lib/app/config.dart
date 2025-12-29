@@ -1,11 +1,18 @@
 class ApiConfig {
-  const ApiConfig({required this.baseUrl, required this.apiKey});
+  const ApiConfig({required this.apiBaseUrl, required this.apiKey});
 
-  final String baseUrl;
+  final String apiBaseUrl;
   final String apiKey;
+
+  ApiConfig copyWith({String? apiBaseUrl, String? apiKey}) {
+    return ApiConfig(
+      apiBaseUrl: apiBaseUrl ?? this.apiBaseUrl,
+      apiKey: apiKey ?? this.apiKey,
+    );
+  }
 }
 
 const defaultApiConfig = ApiConfig(
-  baseUrl: 'https://api.example.com/uploads',
+  apiBaseUrl: 'https://api.example.com/uploads',
   apiKey: 'replace-with-api-key',
 );

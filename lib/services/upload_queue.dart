@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
+
 import '../models/api_response.dart';
 import '../models/scan_job.dart';
 import '../services/api_client.dart';
@@ -43,6 +45,12 @@ class UploadQueue {
 
       final isOnline = await _connectivityService.isOnline();
       if (!isOnline) {
+        const message = 'Kein Netz. Wird später gesendet.';
+        debugPrint(message);
+        for (final job in jobs) {
+          job.lastError = message;
+          await _jobRepository.upsert(job);
+        }
         return;
       }
 
