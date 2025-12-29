@@ -23,7 +23,7 @@ final uploadQueueProvider = Provider<UploadQueue>(
   (ref) {
     final apiConfig = ref.watch(apiConfigProvider);
     return UploadQueue(
-      apiBaseUrl: apiConfig.baseUrl,
+      apiBaseUrl: apiConfig.apiBaseUrl,
       apiKey: apiConfig.apiKey,
       jobRepository: ref.watch(jobRepositoryProvider),
       connectivityService: ref.watch(connectivityProvider),

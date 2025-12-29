@@ -1,9 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'features/capture/capture_screen.dart';
+import 'features/jobs/job_detail_screen.dart';
 import 'models/scan_job.dart';
 import 'app/providers.dart';
-import 'storage/job_repository.dart';
 
 void main() {
   runApp(const ProviderScope(child: BelegscannerApp()));
@@ -64,11 +66,21 @@ class JobListScreen extends ConsumerStatefulWidget {
 class _JobListScreenState extends ConsumerState<JobListScreen> {
   late Future<List<ScanJob>> _jobsFuture;
   bool _isSending = false;
+  StreamSubscription<bool>? _connectivitySub;
+  Timer? _debounceTimer;
 
   @override
   void initState() {
     super.initState();
     _jobsFuture = _fetchJobs();
+    _subscribeToConnectivity();
+  }
+
+  @override
+  void dispose() {
+    _connectivitySub?.cancel();
+    _debounceTimer?.cancel();
+    super.dispose();
   }
 
   Future<void> _reload() async {
@@ -89,15 +101,31 @@ class _JobListScreenState extends ConsumerState<JobListScreen> {
       _isSending = true;
     });
 
-    final uploadQueue = ref.read(uploadQueueProvider);
-    await uploadQueue.processQueue();
-    await _reload();
-
-    if (mounted) {
-      setState(() {
-        _isSending = false;
-      });
+    try {
+      final uploadQueue = ref.read(uploadQueueProvider);
+      await uploadQueue.processQueue();
+      await _reload();
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSending = false;
+        });
+      }
     }
+  }
+
+  void _subscribeToConnectivity() {
+    final connectivity = ref.read(connectivityProvider);
+    _connectivitySub = connectivity.online$.listen((online) {
+      if (!online) return;
+
+      _debounceTimer?.cancel();
+      _debounceTimer = Timer(const Duration(seconds: 3), () {
+        if (mounted) {
+          _processQueue();
+        }
+      });
+    });
   }
 
   @override
@@ -204,89 +232,6 @@ class _JobListScreenState extends ConsumerState<JobListScreen> {
                   ),
                 );
               },
-            ),
-          );
-        },
-      ),
-    );
-  }
-}
-
-class JobDetailScreen extends StatelessWidget {
-  const JobDetailScreen({super.key, required this.jobId});
-
-  final String jobId;
-
-  @override
-  Widget build(BuildContext context) {
-    final repository = JobRepository();
-
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Job-Details'),
-      ),
-      body: FutureBuilder<ScanJob?>(
-        future: repository.getByJobId(jobId),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          final job = snapshot.data;
-
-          if (job == null) {
-            return Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.search_off, size: 48),
-                  const SizedBox(height: 12),
-                  const Text('Job konnte nicht gefunden werden.'),
-                  const SizedBox(height: 24),
-                  OutlinedButton(
-                    onPressed: () => Navigator.pushNamedAndRemoveUntil(context, '/', (_) => false),
-                    child: const Text('Zurück zur Liste'),
-                  ),
-                ],
-              ),
-            );
-          }
-
-          return Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Job-ID',
-                  style: TextStyle(color: Colors.grey.shade600, fontWeight: FontWeight.w600),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  job.jobId,
-                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 24),
-                const Text(
-                  'Status',
-                  style: TextStyle(fontWeight: FontWeight.w600),
-                ),
-                const SizedBox(height: 8),
-                Chip(label: Text(_statusLabel(job.status))),
-                const SizedBox(height: 24),
-                const Text(
-                  'Bild gespeichert unter',
-                  style: TextStyle(fontWeight: FontWeight.w600),
-                ),
-                const SizedBox(height: 8),
-                Text(job.imagePath),
-                const Spacer(),
-                FilledButton.icon(
-                  onPressed: () => Navigator.pushNamed(context, '/capture'),
-                  icon: const Icon(Icons.add_photo_alternate_outlined),
-                  label: const Text('Neuen Scan hinzufügen'),
-                ),
-              ],
             ),
           );
         },

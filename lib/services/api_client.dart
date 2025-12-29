@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
+import 'package:image/image.dart' as img;
 import '../models/api_response.dart';
 import '../models/scan_job.dart';
 
@@ -30,13 +32,15 @@ class ApiClient {
       'retryCount': job.retryCount,
     });
 
+    final uploadFile = await _prepareUploadFile(job.imagePath);
+
     final formData = FormData.fromMap({
       'jobId': job.jobId,
       'clientTs': job.createdAt.toIso8601String(),
       'meta': meta,
       if (job.idempotencyKey.isNotEmpty) 'idempotencyKey': job.idempotencyKey,
       'image': await MultipartFile.fromFile(
-        job.imagePath,
+        uploadFile.path,
         filename: 'image.jpg',
       ),
     });
@@ -51,7 +55,9 @@ class ApiClient {
       return _handleResponse(response);
     } on DioException catch (e) {
       if (_isNetworkError(e)) {
-        throw TransientNetworkException(e.message ?? 'Network error');
+        throw TransientNetworkException(
+          _mapNetworkMessage(e.type),
+        );
       }
 
       final response = e.response;
@@ -59,9 +65,34 @@ class ApiClient {
         return _errorResultFromResponse(response);
       }
 
-      throw TransientNetworkException(e.message ?? 'Network error');
-    } on SocketException catch (e) {
-      throw TransientNetworkException(e.message);
+      throw TransientNetworkException(
+        _mapNetworkMessage(e.type),
+      );
+    } on SocketException catch (_) {
+      throw TransientNetworkException('Kein Netz. Wird später gesendet.');
+    }
+  }
+
+  Future<File> _prepareUploadFile(String path) async {
+    final file = File(path);
+
+    try {
+      final bytes = await file.readAsBytes();
+      final decoded = img.decodeImage(bytes);
+      if (decoded == null) return file;
+
+      final resized = decoded.width > 1600
+          ? img.copyResize(decoded, width: 1600)
+          : decoded;
+
+      final jpgBytes = img.encodeJpg(resized, quality: 80);
+      final tempDir = await Directory.systemTemp.createTemp('upload_');
+      final compressedFile = File('${tempDir.path}/compressed.jpg');
+      await compressedFile.writeAsBytes(jpgBytes);
+      return compressedFile;
+    } catch (e) {
+      debugPrint('Image compression skipped: $e');
+      return file;
     }
   }
 
@@ -130,6 +161,16 @@ class ApiClient {
         exception.type == DioExceptionType.receiveTimeout ||
         exception.type == DioExceptionType.sendTimeout ||
         exception.type == DioExceptionType.connectionError;
+  }
+
+  String _mapNetworkMessage(DioExceptionType type) {
+    if (type == DioExceptionType.connectionTimeout ||
+        type == DioExceptionType.receiveTimeout ||
+        type == DioExceptionType.sendTimeout) {
+      return 'Server antwortet nicht. Wir versuchen es erneut.';
+    }
+
+    return 'Kein Netz. Wird später gesendet.';
   }
 }
 
