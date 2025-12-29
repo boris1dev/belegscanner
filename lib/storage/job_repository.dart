@@ -35,7 +35,7 @@ class JobRepository {
 
   Future<ScanJob?> getByJobId(String jobId) async {
     final isar = await _isarProvider.instance;
-    return isar.scanJobs.where().jobIdEqualTo(jobId).findFirst();
+    return isar.scanJobs.filter().jobIdEqualTo(jobId).findFirst();
   }
 
   Future<void> deleteByJobId(String jobId) async {
