@@ -34,6 +34,7 @@ class ApiClient {
     });
 
     final uploadFile = await _prepareUploadFile(job.imagePath);
+    final uploadFileName = uploadFile.path.split(Platform.pathSeparator).last;
 
     final formData = FormData.fromMap({
       'jobId': job.jobId,
@@ -42,7 +43,7 @@ class ApiClient {
       if (job.idempotencyKey.isNotEmpty) 'idempotencyKey': job.idempotencyKey,
       'image': await MultipartFile.fromFile(
         uploadFile.path,
-        filename: 'image.jpg',
+        filename: uploadFileName,
       ),
     });
 
@@ -102,13 +103,13 @@ class ApiClient {
       }
 
       final byteData =
-          await scaledImage.toByteData(format: ui.ImageByteFormat.jpeg);
+          await scaledImage.toByteData(format: ui.ImageByteFormat.png);
       if (byteData == null) return file;
 
-      final jpgBytes = byteData.buffer.asUint8List();
+      final encodedBytes = byteData.buffer.asUint8List();
       final tempDir = await Directory.systemTemp.createTemp('upload_');
-      final compressedFile = File('${tempDir.path}/compressed.jpg');
-      await compressedFile.writeAsBytes(jpgBytes);
+      final compressedFile = File('${tempDir.path}/compressed.png');
+      await compressedFile.writeAsBytes(encodedBytes);
       return compressedFile;
     } catch (e) {
       debugPrint('Image compression skipped: $e');
