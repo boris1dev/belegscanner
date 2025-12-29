@@ -18,7 +18,9 @@ class JobRepository {
 
   Future<List<ScanJob>> getAllSorted() async {
     final isar = await _isarProvider.instance;
-    return isar.scanJobs.where().sortByCreatedAtDesc().findAll();
+    final jobs = await isar.scanJobs.where().findAll();
+    jobs.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return jobs;
   }
 
   Future<List<ScanJob>> getPendingOrFailed() async {
@@ -33,7 +35,7 @@ class JobRepository {
 
   Future<ScanJob?> getByJobId(String jobId) async {
     final isar = await _isarProvider.instance;
-    return isar.scanJobs.where().jobIdEqualTo(jobId).findFirst();
+    return isar.scanJobs.filter().jobIdEqualTo(jobId).findFirst();
   }
 
   Future<void> deleteByJobId(String jobId) async {
