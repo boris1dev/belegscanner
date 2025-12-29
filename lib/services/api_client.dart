@@ -1,9 +1,10 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
+import 'dart:ui' as ui;
 
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
-import 'package:image/image.dart' as img;
 import '../models/api_response.dart';
 import '../models/scan_job.dart';
 
@@ -33,6 +34,7 @@ class ApiClient {
     });
 
     final uploadFile = await _prepareUploadFile(job.imagePath);
+    final uploadFileName = uploadFile.path.split(Platform.pathSeparator).last;
 
     final formData = FormData.fromMap({
       'jobId': job.jobId,
@@ -41,7 +43,7 @@ class ApiClient {
       if (job.idempotencyKey.isNotEmpty) 'idempotencyKey': job.idempotencyKey,
       'image': await MultipartFile.fromFile(
         uploadFile.path,
-        filename: 'image.jpg',
+        filename: uploadFileName,
       ),
     });
 
@@ -78,17 +80,36 @@ class ApiClient {
 
     try {
       final bytes = await file.readAsBytes();
-      final decoded = img.decodeImage(bytes);
-      if (decoded == null) return file;
+      final codec = await ui.instantiateImageCodec(bytes);
+      final frame = await codec.getNextFrame();
+      final image = frame.image;
 
-      final resized = decoded.width > 1600
-          ? img.copyResize(decoded, width: 1600)
-          : decoded;
+      final targetWidth = image.width > 1600 ? 1600 : image.width;
+      final targetHeight = (image.height * (targetWidth / image.width))
+          .round()
+          .clamp(1, 100000) as int;
 
-      final jpgBytes = img.encodeJpg(resized, quality: 80);
+      ui.Image scaledImage;
+      if (targetWidth == image.width && targetHeight == image.height) {
+        scaledImage = image;
+      } else {
+        final recorder = ui.PictureRecorder();
+        final canvas = ui.Canvas(recorder);
+        final paint = ui.Paint();
+        canvas.scale(targetWidth / image.width, targetHeight / image.height);
+        canvas.drawImage(image, ui.Offset.zero, paint);
+        final picture = recorder.endRecording();
+        scaledImage = await picture.toImage(targetWidth, targetHeight);
+      }
+
+      final byteData =
+          await scaledImage.toByteData(format: ui.ImageByteFormat.png);
+      if (byteData == null) return file;
+
+      final encodedBytes = byteData.buffer.asUint8List();
       final tempDir = await Directory.systemTemp.createTemp('upload_');
-      final compressedFile = File('${tempDir.path}/compressed.jpg');
-      await compressedFile.writeAsBytes(jpgBytes);
+      final compressedFile = File('${tempDir.path}/compressed.png');
+      await compressedFile.writeAsBytes(encodedBytes);
       return compressedFile;
     } catch (e) {
       debugPrint('Image compression skipped: $e');
