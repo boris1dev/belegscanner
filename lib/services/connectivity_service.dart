@@ -7,14 +7,14 @@ class ConnectivityService {
   final Connectivity _connectivity;
 
   Stream<bool> get online$ =>
-      _connectivity.onConnectivityChanged.map(_isConnected).distinct();
+      _connectivity.onConnectivityChanged.map(_anyConnected).distinct();
 
   Future<bool> isOnline() async {
-    final connectivityResult = await _connectivity.checkConnectivity();
-    return _isConnected(connectivityResult);
+    final connectivityResults = await _connectivity.checkConnectivity();
+    return _anyConnected(connectivityResults);
   }
 
-  bool _isConnected(ConnectivityResult result) {
-    return result != ConnectivityResult.none;
+  bool _anyConnected(List<ConnectivityResult> results) {
+    return results.any((result) => result != ConnectivityResult.none);
   }
 }
