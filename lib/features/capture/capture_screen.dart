@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
 
@@ -20,6 +21,7 @@ class _CaptureScreenState extends State<CaptureScreen> {
   late Future<void> _initializeFuture;
   bool _isSaving = false;
   String? _errorMessage;
+  final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
@@ -68,39 +70,7 @@ class _CaptureScreenState extends State<CaptureScreen> {
 
     try {
       final picture = await controller.takePicture();
-
-      final keep = await _showPreviewDialog(picture.path);
-      if (keep != true) {
-        await File(picture.path).delete().catchError((_) {});
-        return;
-      }
-
-      final jobId = const Uuid().v4();
-      final idempotencyKey = const Uuid().v4();
-
-      final documentsDir = await getApplicationDocumentsDirectory();
-      final scansDir = Directory('${documentsDir.path}/scans');
-      await scansDir.create(recursive: true);
-      final targetPath = '${scansDir.path}/$jobId.jpg';
-
-      final savedFile = await File(picture.path).rename(targetPath);
-
-      final job = ScanJob()
-        ..jobId = jobId
-        ..idempotencyKey = idempotencyKey
-        ..status = ScanJobStatus.pending
-        ..createdAt = DateTime.now()
-        ..retryCount = 0
-        ..imagePath = savedFile.path;
-
-      await JobRepository().upsert(job);
-
-      if (!mounted) return;
-      Navigator.pushNamedAndRemoveUntil(
-        context,
-        '/job/$jobId',
-        ModalRoute.withName('/'),
-      );
+      await _handleCapturedImage(File(picture.path), deleteAfterSave: true);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -113,6 +83,78 @@ class _CaptureScreenState extends State<CaptureScreen> {
         });
       }
     }
+  }
+
+  Future<void> _pickFromGallery() async {
+    if (_isSaving) return;
+
+    setState(() {
+      _isSaving = true;
+    });
+
+    try {
+      final result = await _picker.pickImage(source: ImageSource.gallery);
+      if (result == null) return;
+      final tempCopy = await _copyToTempFile(result.path);
+      await _handleCapturedImage(tempCopy, deleteAfterSave: true);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Konnte kein Foto auswählen.')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSaving = false;
+        });
+      }
+    }
+  }
+
+  Future<File> _copyToTempFile(String sourcePath) async {
+    final tempDir = await Directory.systemTemp.createTemp('gallery_copy');
+    final target = File('${tempDir.path}/${const Uuid().v4()}.jpg');
+    return File(sourcePath).copy(target.path);
+  }
+
+  Future<void> _handleCapturedImage(File file, {required bool deleteAfterSave}) async {
+    final keep = await _showPreviewDialog(file.path);
+    if (keep != true) {
+      await file.delete().catchError((_) {});
+      return;
+    }
+
+    final jobId = const Uuid().v4();
+    final idempotencyKey = const Uuid().v4();
+
+    final documentsDir = await getApplicationDocumentsDirectory();
+    final scansDir = Directory('${documentsDir.path}/scans');
+    await scansDir.create(recursive: true);
+    final targetPath = '${scansDir.path}/$jobId.jpg';
+
+    File savedFile;
+    if (deleteAfterSave) {
+      savedFile = await file.rename(targetPath);
+    } else {
+      savedFile = await file.copy(targetPath);
+    }
+
+    final job = ScanJob()
+      ..jobId = jobId
+      ..idempotencyKey = idempotencyKey
+      ..status = ScanJobStatus.pending
+      ..createdAt = DateTime.now()
+      ..retryCount = 0
+      ..imagePath = savedFile.path;
+
+    await JobRepository().upsert(job);
+
+    if (!mounted) return;
+    Navigator.pushNamedAndRemoveUntil(
+      context,
+      '/job/$jobId',
+      ModalRoute.withName('/'),
+    );
   }
 
   Future<bool?> _showPreviewDialog(String path) {
@@ -161,7 +203,10 @@ class _CaptureScreenState extends State<CaptureScreen> {
         future: _initializeFuture,
         builder: (context, snapshot) {
           if (_errorMessage != null) {
-            return _ErrorState(message: _errorMessage!);
+            return _ErrorState(
+              message: _errorMessage!,
+              onPickFromGallery: _pickFromGallery,
+            );
           }
 
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -169,7 +214,10 @@ class _CaptureScreenState extends State<CaptureScreen> {
           }
 
           if (_controller == null || !_controller!.value.isInitialized) {
-            return const _ErrorState(message: 'Kamera steht nicht bereit.');
+            return _ErrorState(
+              message: 'Kamera steht nicht bereit.',
+              onPickFromGallery: _pickFromGallery,
+            );
           }
 
           return Column(
@@ -209,9 +257,10 @@ class _CaptureScreenState extends State<CaptureScreen> {
 }
 
 class _ErrorState extends StatelessWidget {
-  const _ErrorState({required this.message});
+  const _ErrorState({required this.message, this.onPickFromGallery});
 
   final String message;
+  final VoidCallback? onPickFromGallery;
 
   @override
   Widget build(BuildContext context) {
@@ -223,6 +272,14 @@ class _ErrorState extends StatelessWidget {
           const SizedBox(height: 12),
           Text(message),
           const SizedBox(height: 24),
+          if (onPickFromGallery != null) ...[
+            FilledButton.icon(
+              onPressed: onPickFromGallery,
+              icon: const Icon(Icons.photo_library_outlined),
+              label: const Text('Aus Fotos wählen'),
+            ),
+            const SizedBox(height: 12),
+          ],
           OutlinedButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('Zurück'),

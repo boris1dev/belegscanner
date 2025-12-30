@@ -67,6 +67,21 @@ const ScanJobSchema = CollectionSchema(
       name: r'status',
       type: IsarType.byte,
       enumMap: _ScanJobstatusEnumValueMap,
+    ),
+    r'missingJson': PropertySchema(
+      id: 10,
+      name: r'missingJson',
+      type: IsarType.string,
+    ),
+    r'serverMessage': PropertySchema(
+      id: 11,
+      name: r'serverMessage',
+      type: IsarType.string,
+    ),
+    r'serverStatus': PropertySchema(
+      id: 12,
+      name: r'serverStatus',
+      type: IsarType.string,
     )
   },
   estimateSize: _scanJobEstimateSize,
@@ -137,6 +152,24 @@ int _scanJobEstimateSize(
       bytesCount += 3 + value.length * 3;
     }
   }
+  {
+    final value = object.missingJson;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
+  {
+    final value = object.serverMessage;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
+  {
+    final value = object.serverStatus;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   return bytesCount;
 }
 
@@ -156,6 +189,9 @@ void _scanJobSerialize(
   writer.writeString(offsets[7], object.serverBelegId);
   writer.writeString(offsets[8], object.serverPayloadJson);
   writer.writeByte(offsets[9], object.status.index);
+  writer.writeString(offsets[10], object.missingJson);
+  writer.writeString(offsets[11], object.serverMessage);
+  writer.writeString(offsets[12], object.serverStatus);
 }
 
 ScanJob _scanJobDeserialize(
@@ -178,6 +214,9 @@ ScanJob _scanJobDeserialize(
   object.status =
       _ScanJobstatusValueEnumMap[reader.readByteOrNull(offsets[9])] ??
           ScanJobStatus.pending;
+  object.missingJson = reader.readStringOrNull(offsets[10]);
+  object.serverMessage = reader.readStringOrNull(offsets[11]);
+  object.serverStatus = reader.readStringOrNull(offsets[12]);
   return object;
 }
 
@@ -209,6 +248,12 @@ P _scanJobDeserializeProp<P>(
     case 9:
       return (_ScanJobstatusValueEnumMap[reader.readByteOrNull(offset)] ??
           ScanJobStatus.pending) as P;
+    case 10:
+      return (reader.readStringOrNull(offset)) as P;
+    case 11:
+      return (reader.readStringOrNull(offset)) as P;
+    case 12:
+      return (reader.readStringOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
@@ -1582,6 +1627,454 @@ extension ScanJobQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.greaterThan(
         property: r'serverPayloadJson',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<ScanJob, ScanJob, QAfterFilterCondition> missingJsonIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'missingJson',
+      ));
+    });
+  }
+
+  QueryBuilder<ScanJob, ScanJob, QAfterFilterCondition>
+      missingJsonIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'missingJson',
+      ));
+    });
+  }
+
+  QueryBuilder<ScanJob, ScanJob, QAfterFilterCondition> missingJsonEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'missingJson',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ScanJob, ScanJob, QAfterFilterCondition> missingJsonGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'missingJson',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ScanJob, ScanJob, QAfterFilterCondition> missingJsonLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'missingJson',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ScanJob, ScanJob, QAfterFilterCondition> missingJsonBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'missingJson',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ScanJob, ScanJob, QAfterFilterCondition> missingJsonStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'missingJson',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ScanJob, ScanJob, QAfterFilterCondition> missingJsonEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'missingJson',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ScanJob, ScanJob, QAfterFilterCondition>
+      missingJsonContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'missingJson',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ScanJob, ScanJob, QAfterFilterCondition> missingJsonMatches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'missingJson',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ScanJob, ScanJob, QAfterFilterCondition> missingJsonIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'missingJson',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<ScanJob, ScanJob, QAfterFilterCondition>
+      missingJsonIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'missingJson',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<ScanJob, ScanJob, QAfterFilterCondition>
+      serverMessageIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'serverMessage',
+      ));
+    });
+  }
+
+  QueryBuilder<ScanJob, ScanJob, QAfterFilterCondition>
+      serverMessageIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'serverMessage',
+      ));
+    });
+  }
+
+  QueryBuilder<ScanJob, ScanJob, QAfterFilterCondition> serverMessageEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'serverMessage',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ScanJob, ScanJob, QAfterFilterCondition>
+      serverMessageGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'serverMessage',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ScanJob, ScanJob, QAfterFilterCondition> serverMessageLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'serverMessage',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ScanJob, ScanJob, QAfterFilterCondition> serverMessageBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'serverMessage',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ScanJob, ScanJob, QAfterFilterCondition>
+      serverMessageStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'serverMessage',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ScanJob, ScanJob, QAfterFilterCondition>
+      serverMessageEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'serverMessage',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ScanJob, ScanJob, QAfterFilterCondition>
+      serverMessageContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'serverMessage',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ScanJob, ScanJob, QAfterFilterCondition> serverMessageMatches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'serverMessage',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ScanJob, ScanJob, QAfterFilterCondition>
+      serverMessageIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'serverMessage',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<ScanJob, ScanJob, QAfterFilterCondition>
+      serverMessageIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'serverMessage',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<ScanJob, ScanJob, QAfterFilterCondition> serverStatusIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'serverStatus',
+      ));
+    });
+  }
+
+  QueryBuilder<ScanJob, ScanJob, QAfterFilterCondition>
+      serverStatusIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'serverStatus',
+      ));
+    });
+  }
+
+  QueryBuilder<ScanJob, ScanJob, QAfterFilterCondition> serverStatusEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'serverStatus',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ScanJob, ScanJob, QAfterFilterCondition> serverStatusGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'serverStatus',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ScanJob, ScanJob, QAfterFilterCondition> serverStatusLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'serverStatus',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ScanJob, ScanJob, QAfterFilterCondition> serverStatusBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'serverStatus',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ScanJob, ScanJob, QAfterFilterCondition>
+      serverStatusStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'serverStatus',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ScanJob, ScanJob, QAfterFilterCondition> serverStatusEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'serverStatus',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ScanJob, ScanJob, QAfterFilterCondition>
+      serverStatusContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'serverStatus',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ScanJob, ScanJob, QAfterFilterCondition> serverStatusMatches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'serverStatus',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ScanJob, ScanJob, QAfterFilterCondition>
+      serverStatusIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'serverStatus',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<ScanJob, ScanJob, QAfterFilterCondition>
+      serverStatusIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'serverStatus',
         value: '',
       ));
     });

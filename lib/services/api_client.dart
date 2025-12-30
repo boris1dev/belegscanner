@@ -126,41 +126,49 @@ class ApiClient {
     }
 
     if (data is! Map<String, dynamic>) {
-      return ErrorResult(message: 'Unexpected response format');
-    }
-
-    final missing = data['missingFields'] ?? data['missing'];
-    final extracted = data['extracted'];
-    final message = data['message']?.toString() ?? 'Success';
-
-    if (missing is List) {
-      final missingFields = missing
-          .whereType<Map<String, dynamic>>()
-          .map(
-            (field) => MissingField(
-              field: field['field']?.toString() ?? '',
-              label: field['label']?.toString() ?? '',
-            ),
-          )
-          .toList();
-
-      return MissingFieldsResult(
-        missing: missingFields,
-        extracted: extracted is Map<String, dynamic> ? extracted : null,
-        message: message,
+      final webhookResponse = WebhookResponse(
+        status: WebhookStatus.error,
+        message: 'Unexpected response format',
+      );
+      return ErrorResult(
+        response: webhookResponse,
+        message: webhookResponse.message!,
       );
     }
 
-    final belegId = data['belegId']?.toString();
-    if (belegId == null || belegId.isEmpty) {
-      return ErrorResult(message: 'Missing belegId in response');
-    }
+    final webhookResponse = WebhookResponse.fromJson(data);
 
-    return OkResult(
-      belegId: belegId,
-      extracted: extracted is Map<String, dynamic> ? extracted : null,
-      message: message,
-    );
+    switch (webhookResponse.status) {
+      case WebhookStatus.ok:
+        final belegId = webhookResponse.belegId;
+        if (belegId == null || belegId.isEmpty) {
+          return ErrorResult(
+            response: webhookResponse,
+            message: 'Missing belegId in response',
+          );
+        }
+
+        return OkResult(
+          response: webhookResponse,
+          belegId: belegId,
+          extracted: webhookResponse.extracted,
+          message: webhookResponse.message,
+        );
+      case WebhookStatus.missingFields:
+        final missing = webhookResponse.missing ?? [];
+        return MissingFieldsResult(
+          response: webhookResponse,
+          missing: missing,
+          extracted: webhookResponse.extracted,
+          message: webhookResponse.message,
+        );
+      case WebhookStatus.error:
+        return ErrorResult(
+          response: webhookResponse,
+          message:
+              webhookResponse.message ?? 'Request failed with status $statusCode',
+        );
+    }
   }
 
   ErrorResult _errorResultFromResponse(Response<dynamic> response) {
@@ -169,11 +177,26 @@ class ApiClient {
       final message = data['message']?.toString() ??
           'Request failed with status ${response.statusCode}';
       final errorCode = data['errorCode']?.toString();
-      return ErrorResult(message: message, errorCode: errorCode);
+      final webhookResponse = WebhookResponse(
+        status: WebhookStatus.error,
+        message: message,
+      );
+      return ErrorResult(
+        response: webhookResponse,
+        message: message,
+        errorCode: errorCode,
+      );
     }
 
+    final fallbackMessage = 'Request failed with status ${response.statusCode}';
+    final webhookResponse = WebhookResponse(
+      status: WebhookStatus.error,
+      message: fallbackMessage,
+    );
+
     return ErrorResult(
-      message: 'Request failed with status ${response.statusCode}',
+      response: webhookResponse,
+      message: fallbackMessage,
     );
   }
 
