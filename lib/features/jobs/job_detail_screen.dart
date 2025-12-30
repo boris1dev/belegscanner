@@ -127,7 +127,11 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
     if (jsonPayload == null) return [];
     try {
       final decoded = jsonDecode(jsonPayload);
-      final missing = decoded['missing'];
+      final missing = decoded is List
+          ? decoded
+          : decoded is Map<String, dynamic>
+              ? decoded['missing']
+              : null;
       if (missing is List) {
         return missing
             .whereType<Map<String, dynamic>>()
@@ -142,6 +146,19 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
       return [];
     } catch (_) {
       return [];
+    }
+  }
+
+  Map<String, dynamic>? _parseExtracted(String? jsonPayload) {
+    if (jsonPayload == null) return null;
+    try {
+      final decoded = jsonDecode(jsonPayload);
+      if (decoded is Map<String, dynamic>) {
+        return decoded;
+      }
+      return null;
+    } catch (_) {
+      return null;
     }
   }
 
@@ -181,7 +198,11 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
       );
     }
 
-    final missingFields = _parseMissingFields(job.serverPayloadJson);
+    final missingFields =
+        _parseMissingFields(job.missingJson ?? job.serverPayloadJson);
+    final extracted = _parseExtracted(job.serverPayloadJson);
+    final prettyExtracted =
+        extracted != null ? const JsonEncoder.withIndent('  ').convert(extracted) : null;
 
     return Scaffold(
       appBar: AppBar(
@@ -214,7 +235,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
                     ],
                   ),
                 ),
-                Chip(label: Text('${_statusLabel(job.status)} • ${job.retryCount}x')),
+                Chip(label: Text('Versuche: ${job.retryCount}x')),
               ],
             ),
             const SizedBox(height: 24),
@@ -226,16 +247,28 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
               ),
             ),
             const SizedBox(height: 24),
+            if (job.serverBelegId != null) ...[
+              _buildStatusBadge(job.status),
+              const SizedBox(height: 12),
+              const Text(
+                'Beleg-ID',
+                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+              ),
+              const SizedBox(height: 8),
+              SelectableText(job.serverBelegId!),
+              const SizedBox(height: 16),
+            ],
             if (job.status == ScanJobStatus.needsFix && missingFields.isNotEmpty) ...[
               const Text(
-                'Fehlende Felder',
+                'Fehlende Angaben',
                 style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
               ),
               const SizedBox(height: 8),
               ...missingFields.map(
                 (item) => ListTile(
                   contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.warning_amber_rounded, color: Colors.orange),
+                  leading:
+                      const Icon(Icons.warning_amber_rounded, color: Colors.orange),
                   title: Text(item['label'] ?? item['field'] ?? ''),
                   subtitle: item['field'] != null && item['field']!.isNotEmpty
                       ? Text(item['field']!)
@@ -244,13 +277,24 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
               ),
               const SizedBox(height: 16),
             ],
-            if (job.status == ScanJobStatus.done && job.serverBelegId != null) ...[
+            if (job.status == ScanJobStatus.done && extracted != null) ...[
               const Text(
-                'Beleg-ID',
+                'Erkannte Daten',
                 style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
               ),
               const SizedBox(height: 8),
-              SelectableText(job.serverBelegId!),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  prettyExtracted ?? extracted.toString(),
+                  style: const TextStyle(fontFamily: 'monospace'),
+                ),
+              ),
               const SizedBox(height: 16),
             ],
             if (job.lastError != null) ...[
@@ -316,6 +360,50 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
 
     return Image.file(file, fit: BoxFit.cover);
   }
+}
+
+Widget _buildStatusBadge(ScanJobStatus status) {
+  Color backgroundColor;
+  Color textColor;
+  String label;
+
+  switch (status) {
+    case ScanJobStatus.done:
+      backgroundColor = Colors.green.shade100;
+      textColor = Colors.green.shade900;
+      label = 'Fertig';
+      break;
+    case ScanJobStatus.needsFix:
+      backgroundColor = Colors.orange.shade100;
+      textColor = Colors.orange.shade900;
+      label = 'Prüfen';
+      break;
+    case ScanJobStatus.failed:
+      backgroundColor = Colors.red.shade100;
+      textColor = Colors.red.shade900;
+      label = 'Fehler';
+      break;
+    default:
+      backgroundColor = Colors.grey.shade200;
+      textColor = Colors.grey.shade800;
+      label = _statusLabel(status);
+      break;
+  }
+
+  return Container(
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+    decoration: BoxDecoration(
+      color: backgroundColor,
+      borderRadius: BorderRadius.circular(20),
+    ),
+    child: Text(
+      label,
+      style: TextStyle(
+        color: textColor,
+        fontWeight: FontWeight.w600,
+      ),
+    ),
+  );
 }
 
 String _statusLabel(ScanJobStatus status) {
