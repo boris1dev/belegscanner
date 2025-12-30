@@ -25,12 +25,14 @@ class JobRepository {
 
   Future<List<ScanJob>> getPendingOrFailed() async {
     final isar = await _isarProvider.instance;
-    return isar.scanJobs
-        .filter()
-        .statusEqualTo(ScanJobStatus.pending)
-        .or()
-        .statusEqualTo(ScanJobStatus.failed)
-        .findAll();
+    final jobs = await isar.scanJobs.where().findAll();
+    final pendingOrFailed = jobs.where((job) =>
+        job.status == ScanJobStatus.pending ||
+        job.status == ScanJobStatus.failed);
+
+    return pendingOrFailed
+        .toList()
+        ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
   }
 
   Future<ScanJob?> getByJobId(String jobId) async {
