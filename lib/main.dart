@@ -8,6 +8,7 @@ import 'models/scan_job.dart';
 import 'app/providers.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const ProviderScope(child: BelegscannerApp()));
 }
 

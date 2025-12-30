@@ -37,13 +37,13 @@ class JobRepository {
 
   Future<ScanJob?> getByJobId(String jobId) async {
     final isar = await _isarProvider.instance;
-    return isar.scanJobs.filter().jobIdEqualTo(jobId).findFirst();
+    return isar.scanJobs.where().jobIdEqualTo(jobId).findFirst();
   }
 
   Future<void> deleteByJobId(String jobId) async {
     final isar = await _isarProvider.instance;
     await isar.writeTxn(() async {
-      await isar.scanJobs.filter().jobIdEqualTo(jobId).deleteAll();
+      await isar.scanJobs.where().jobIdEqualTo(jobId).deleteAll();
     });
   }
 }

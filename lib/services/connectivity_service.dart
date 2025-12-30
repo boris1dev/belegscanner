@@ -6,8 +6,10 @@ class ConnectivityService {
 
   final Connectivity _connectivity;
 
-  Stream<bool> get online$ =>
-      _connectivity.onConnectivityChanged.map(_anyConnected).distinct();
+  Stream<bool> get online$ async* {
+    yield await isOnline();
+    yield* _connectivity.onConnectivityChanged.map(_anyConnected).distinct();
+  }
 
   Future<bool> isOnline() async {
     final connectivityResults = await _connectivity.checkConnectivity();
