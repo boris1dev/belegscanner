@@ -74,7 +74,34 @@ const ScanJobSchema = CollectionSchema(
   deserialize: _scanJobDeserialize,
   deserializeProp: _scanJobDeserializeProp,
   idName: r'id',
-  indexes: {},
+  indexes: {
+    r'jobId': IndexSchema(
+      id: 7916160552736803877,
+      name: r'jobId',
+      unique: true,
+      replace: false,
+      properties: [
+        IndexPropertySchema(
+          name: r'jobId',
+          type: IndexType.hash,
+          caseSensitive: true,
+        )
+      ],
+    ),
+    r'idempotencyKey': IndexSchema(
+      id: 6522471565226449816,
+      name: r'idempotencyKey',
+      unique: true,
+      replace: false,
+      properties: [
+        IndexPropertySchema(
+          name: r'idempotencyKey',
+          type: IndexType.hash,
+          caseSensitive: true,
+        )
+      ],
+    )
+  },
   links: {},
   embeddedSchemas: {},
   getId: _scanJobGetId,
@@ -214,6 +241,114 @@ void _scanJobAttach(IsarCollection<dynamic> col, Id id, ScanJob object) {
   object.id = id;
 }
 
+extension ScanJobByIndex on IsarCollection<ScanJob> {
+  Future<ScanJob?> getByJobId(String jobId) {
+    return getByIndex(r'jobId', [jobId]);
+  }
+
+  ScanJob? getByJobIdSync(String jobId) {
+    return getByIndexSync(r'jobId', [jobId]);
+  }
+
+  Future<bool> deleteByJobId(String jobId) {
+    return deleteByIndex(r'jobId', [jobId]);
+  }
+
+  bool deleteByJobIdSync(String jobId) {
+    return deleteByIndexSync(r'jobId', [jobId]);
+  }
+
+  Future<List<ScanJob?>> getAllByJobId(List<String> jobIdValues) {
+    final values = jobIdValues.map((e) => [e]).toList();
+    return getAllByIndex(r'jobId', values);
+  }
+
+  List<ScanJob?> getAllByJobIdSync(List<String> jobIdValues) {
+    final values = jobIdValues.map((e) => [e]).toList();
+    return getAllByIndexSync(r'jobId', values);
+  }
+
+  Future<int> deleteAllByJobId(List<String> jobIdValues) {
+    final values = jobIdValues.map((e) => [e]).toList();
+    return deleteAllByIndex(r'jobId', values);
+  }
+
+  int deleteAllByJobIdSync(List<String> jobIdValues) {
+    final values = jobIdValues.map((e) => [e]).toList();
+    return deleteAllByIndexSync(r'jobId', values);
+  }
+
+  Future<Id> putByJobId(ScanJob object) {
+    return putByIndex(r'jobId', object);
+  }
+
+  Id putByJobIdSync(ScanJob object, {bool saveLinks = true}) {
+    return putByIndexSync(r'jobId', object, saveLinks: saveLinks);
+  }
+
+  Future<List<Id>> putAllByJobId(List<ScanJob> objects) {
+    return putAllByIndex(r'jobId', objects);
+  }
+
+  List<Id> putAllByJobIdSync(List<ScanJob> objects, {bool saveLinks = true}) {
+    return putAllByIndexSync(r'jobId', objects, saveLinks: saveLinks);
+  }
+
+  Future<ScanJob?> getByIdempotencyKey(String idempotencyKey) {
+    return getByIndex(r'idempotencyKey', [idempotencyKey]);
+  }
+
+  ScanJob? getByIdempotencyKeySync(String idempotencyKey) {
+    return getByIndexSync(r'idempotencyKey', [idempotencyKey]);
+  }
+
+  Future<bool> deleteByIdempotencyKey(String idempotencyKey) {
+    return deleteByIndex(r'idempotencyKey', [idempotencyKey]);
+  }
+
+  bool deleteByIdempotencyKeySync(String idempotencyKey) {
+    return deleteByIndexSync(r'idempotencyKey', [idempotencyKey]);
+  }
+
+  Future<List<ScanJob?>> getAllByIdempotencyKey(
+      List<String> idempotencyKeyValues) {
+    final values = idempotencyKeyValues.map((e) => [e]).toList();
+    return getAllByIndex(r'idempotencyKey', values);
+  }
+
+  List<ScanJob?> getAllByIdempotencyKeySync(List<String> idempotencyKeyValues) {
+    final values = idempotencyKeyValues.map((e) => [e]).toList();
+    return getAllByIndexSync(r'idempotencyKey', values);
+  }
+
+  Future<int> deleteAllByIdempotencyKey(List<String> idempotencyKeyValues) {
+    final values = idempotencyKeyValues.map((e) => [e]).toList();
+    return deleteAllByIndex(r'idempotencyKey', values);
+  }
+
+  int deleteAllByIdempotencyKeySync(List<String> idempotencyKeyValues) {
+    final values = idempotencyKeyValues.map((e) => [e]).toList();
+    return deleteAllByIndexSync(r'idempotencyKey', values);
+  }
+
+  Future<Id> putByIdempotencyKey(ScanJob object) {
+    return putByIndex(r'idempotencyKey', object);
+  }
+
+  Id putByIdempotencyKeySync(ScanJob object, {bool saveLinks = true}) {
+    return putByIndexSync(r'idempotencyKey', object, saveLinks: saveLinks);
+  }
+
+  Future<List<Id>> putAllByIdempotencyKey(List<ScanJob> objects) {
+    return putAllByIndex(r'idempotencyKey', objects);
+  }
+
+  List<Id> putAllByIdempotencyKeySync(List<ScanJob> objects,
+      {bool saveLinks = true}) {
+    return putAllByIndexSync(r'idempotencyKey', objects, saveLinks: saveLinks);
+  }
+}
+
 extension ScanJobQueryWhereSort on QueryBuilder<ScanJob, ScanJob, QWhere> {
   QueryBuilder<ScanJob, ScanJob, QAfterWhere> anyId() {
     return QueryBuilder.apply(this, (query) {
@@ -285,6 +420,95 @@ extension ScanJobQueryWhere on QueryBuilder<ScanJob, ScanJob, QWhereClause> {
         upper: upperId,
         includeUpper: includeUpper,
       ));
+    });
+  }
+
+  QueryBuilder<ScanJob, ScanJob, QAfterWhereClause> jobIdEqualTo(String jobId) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.equalTo(
+        indexName: r'jobId',
+        value: [jobId],
+      ));
+    });
+  }
+
+  QueryBuilder<ScanJob, ScanJob, QAfterWhereClause> jobIdNotEqualTo(
+      String jobId) {
+    return QueryBuilder.apply(this, (query) {
+      if (query.whereSort == Sort.asc) {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'jobId',
+              lower: [],
+              upper: [jobId],
+              includeUpper: false,
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'jobId',
+              lower: [jobId],
+              includeLower: false,
+              upper: [],
+            ));
+      } else {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'jobId',
+              lower: [jobId],
+              includeLower: false,
+              upper: [],
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'jobId',
+              lower: [],
+              upper: [jobId],
+              includeUpper: false,
+            ));
+      }
+    });
+  }
+
+  QueryBuilder<ScanJob, ScanJob, QAfterWhereClause> idempotencyKeyEqualTo(
+      String idempotencyKey) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.equalTo(
+        indexName: r'idempotencyKey',
+        value: [idempotencyKey],
+      ));
+    });
+  }
+
+  QueryBuilder<ScanJob, ScanJob, QAfterWhereClause> idempotencyKeyNotEqualTo(
+      String idempotencyKey) {
+    return QueryBuilder.apply(this, (query) {
+      if (query.whereSort == Sort.asc) {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'idempotencyKey',
+              lower: [],
+              upper: [idempotencyKey],
+              includeUpper: false,
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'idempotencyKey',
+              lower: [idempotencyKey],
+              includeLower: false,
+              upper: [],
+            ));
+      } else {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'idempotencyKey',
+              lower: [idempotencyKey],
+              includeLower: false,
+              upper: [],
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'idempotencyKey',
+              lower: [],
+              upper: [idempotencyKey],
+              includeUpper: false,
+            ));
+      }
     });
   }
 }

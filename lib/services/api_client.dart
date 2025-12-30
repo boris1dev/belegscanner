@@ -24,7 +24,7 @@ class ApiClient {
     required String apiKey,
   }) async {
     final headers = {
-      'X-API-Key': apiKey,
+      if (apiKey.isNotEmpty) 'X-API-Key': apiKey,
       if (job.idempotencyKey.isNotEmpty) 'X-Idempotency-Key': job.idempotencyKey,
     };
 
