@@ -33,7 +33,9 @@ class ScanJob {
 
   DateTime? lastAttemptAt;
 
-
   String? serverBelegId;
   String? serverPayloadJson;
+  String? missingJson;
+  String? serverMessage;
+  String? serverStatus;
 }

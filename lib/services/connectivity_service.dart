@@ -14,7 +14,15 @@ class ConnectivityService {
     return _anyConnected(connectivityResults);
   }
 
-  bool _anyConnected(List<ConnectivityResult> results) {
-    return results.any((result) => result != ConnectivityResult.none);
+  bool _anyConnected(dynamic results) {
+    if (results is List<ConnectivityResult>) {
+      return results.any((result) => result != ConnectivityResult.none);
+    }
+
+    if (results is ConnectivityResult) {
+      return results != ConnectivityResult.none;
+    }
+
+    return false;
   }
 }

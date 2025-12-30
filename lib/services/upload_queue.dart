@@ -69,36 +69,47 @@ class UploadQueue {
           if (result is OkResult) {
             job.status = ScanJobStatus.done;
             job.serverBelegId = result.belegId;
-            job.serverPayloadJson = result.extracted != null
-                ? jsonEncode({'extracted': result.extracted})
-                : null;
+            job.serverPayloadJson =
+                result.extracted != null ? jsonEncode(result.extracted) : null;
             job.lastError = null;
+            job.serverStatus = result.response.status.name;
+            job.serverMessage = result.message;
+            job.missingJson = null;
           } else if (result is MissingFieldsResult) {
             job.status = ScanJobStatus.needsFix;
-            job.serverBelegId = null;
-            job.serverPayloadJson = jsonEncode({
-              'missing': result.missing
-                  .map((missing) => {
-                        'field': missing.field,
-                        'label': missing.label,
-                      })
-                  .toList(),
-              'extracted': result.extracted,
-            });
-            job.lastError = result.message;
+            job.serverBelegId = result.response.belegId;
+            job.serverPayloadJson =
+                result.extracted != null ? jsonEncode(result.extracted) : null;
+            job.missingJson = jsonEncode(result.missing
+                .map(
+                  (missing) => {
+                    'field': missing.field,
+                    'label': missing.label,
+                  },
+                )
+                .toList());
+            job.lastError = null;
+            job.serverStatus = result.response.status.name;
+            job.serverMessage = result.message;
           } else if (result is ErrorResult) {
             job.status = ScanJobStatus.failed;
             job.retryCount += 1;
             job.serverBelegId = null;
             job.serverPayloadJson = null;
+            job.missingJson = null;
             job.lastError = result.message;
+            job.serverStatus = result.response.status.name;
+            job.serverMessage = result.message;
           }
         } on TransientNetworkException catch (e) {
           job.status = ScanJobStatus.failed;
           job.retryCount += 1;
           job.lastError = e.message;
+          job.serverStatus = null;
+          job.serverMessage = null;
           job.serverBelegId = null;
           job.serverPayloadJson = null;
+          job.missingJson = null;
         } finally {
           await _jobRepository.upsert(job);
         }
