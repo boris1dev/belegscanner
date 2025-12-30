@@ -62,7 +62,10 @@ class IsarProvider {
       }
 
       if (_isDuplicateInstanceError(e)) {
-        await Isar.closeAllInstances();
+        final staleInstance = Isar.getInstance(_isarName);
+        if (staleInstance != null && staleInstance.isOpen) {
+          await staleInstance.close();
+        }
       }
 
       stderr.writeln('Failed to open Isar database, recreating it: $e');
