@@ -10,6 +10,7 @@ class IsarProvider {
   IsarProvider._internal();
 
   static final IsarProvider _instance = IsarProvider._internal();
+  static const String _isarName = 'belegscanner';
 
   factory IsarProvider() => _instance;
 
@@ -40,6 +41,11 @@ class IsarProvider {
   }
 
   Future<Isar> _initIsar() async {
+    final existing = Isar.getInstance(_isarName);
+    if (existing != null && existing.isOpen) {
+      return existing;
+    }
+
     final dir = await getApplicationDocumentsDirectory();
     await Directory(dir.path).create(recursive: true);
 
@@ -47,13 +53,16 @@ class IsarProvider {
       return await Isar.open(
         [ScanJobSchema],
         directory: dir.path,
+        name: _isarName,
       );
-    } on IsarError {
+    } on IsarError catch (e) {
+      stderr.writeln('Failed to open Isar database, recreating it: $e');
       await _clearDirectory(dir.path);
 
       return Isar.open(
         [ScanJobSchema],
         directory: dir.path,
+        name: _isarName,
       );
     }
   }
