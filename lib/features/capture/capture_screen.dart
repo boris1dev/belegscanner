@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
@@ -97,6 +98,13 @@ class _CaptureScreenState extends State<CaptureScreen> {
       if (result == null) return;
       final tempCopy = await _copyToTempFile(result.path);
       await _handleCapturedImage(tempCopy, deleteAfterSave: true);
+    } on MissingPluginException {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Bildauswahl nicht verfügbar. Bitte Abhängigkeiten prüfen.'),
+        ),
+      );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
