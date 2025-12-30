@@ -56,6 +56,15 @@ class IsarProvider {
         name: _isarName,
       );
     } on IsarError catch (e) {
+      final existingAfterError = Isar.getInstance(_isarName);
+      if (existingAfterError != null && existingAfterError.isOpen) {
+        return existingAfterError;
+      }
+
+      if (_isDuplicateInstanceError(e)) {
+        await Isar.closeAllInstances();
+      }
+
       stderr.writeln('Failed to open Isar database, recreating it: $e');
       await _clearDirectory(dir.path);
 
@@ -65,6 +74,11 @@ class IsarProvider {
         name: _isarName,
       );
     }
+  }
+
+  bool _isDuplicateInstanceError(IsarError error) {
+    final message = error.message ?? error.toString();
+    return message.contains('Cannot open same Isar instance multiple times');
   }
 
   Future<void> _clearDirectory(String path) async {
