@@ -45,8 +45,10 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
-	<key>NSCameraUsageDescription</key>
+        <key>NSCameraUsageDescription</key>
     <string>Wir benötigen die Kamera, um Belege zu fotografieren.</string>
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>Wir benötigen Zugriff auf deine Fotomediathek, um bereits aufgenommene Belege zu importieren.</string>
     <key>NSPhotoLibraryAddUsageDescription</key>
     <string>Wir speichern das Belegfoto zur späteren Verarbeitung.</string>
 </dict>
