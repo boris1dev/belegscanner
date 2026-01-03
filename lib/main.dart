@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+// ignore: unused_import
+import 'package:isar_flutter_libs/isar_flutter_libs.dart';
 import 'features/capture/capture_screen.dart';
 import 'features/jobs/job_detail_screen.dart';
 import 'models/scan_job.dart';
